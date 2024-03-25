@@ -11,5 +11,5 @@ And this repository is a place where development is in progress or a conceptual 
 3. (private) 1Hour Reset Token Bot
 4. (private) Auto Emoji Bot
 
-#### DOING List
+#### DOING LIST
 1. (private) Auto Clan Manager
