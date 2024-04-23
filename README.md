@@ -10,7 +10,7 @@ And this repository is a place where development is in progress or a conceptual 
 1. Weekly Xur-bot
 2. 소라고둥(고동)
 3. (private) 1Hour Reset Token Bot
-4. (private) Auto Emoji Bot
+4. Auto Emoji Bot
 
 #### DOING LIST
 1. (private) Auto Clan Manager
