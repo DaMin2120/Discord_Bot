@@ -35,10 +35,10 @@ public class App {
 	private static void addCommand(JDA jda) {
 		jda.updateCommands().addCommands(
 				Commands.slash("emoji", "이모티콘을 설정합니다.")
-					.addOption(OptionType.STRING, "delete", "서버에 있는 모든 이모티콘을 삭제합니다. 순차적으로 제거되므로 오래걸릴 수 있습니다.", false)
-					.addOption(OptionType.STRING, "add", "입력된 이모티콘을 추가하는 채널을 지정합니다.", false)
-					.addOption(OptionType.STRING, "log", "이모티콘을 추가하거나 삭제한 기록을 출력합니다.", false),
-				Commands.slash("remove", "이 채널에 존재하는 모든 메세지를 제거합니다. 순차적으로 제거되므로 오래걸릴 수 있습니다.")
+					.addOption(OptionType.BOOLEAN, "delete", "서버에 있는 모든 이모티콘을 삭제합니다. 순차적으로 제거되므로 오래걸릴 수 있습니다.", false)
+					.addOption(OptionType.BOOLEAN, "add", "입력된 이모티콘을 추가하는 채널을 지정합니다.", false)
+					.addOption(OptionType.BOOLEAN, "log", "이모티콘을 추가하거나 삭제한 기록을 출력합니다.", false),
+				Commands.slash("remove", "이 채널에 존재하는 최근 50개의 메세지를 제거합니다. 순차적으로 제거되므로 오래걸릴 수 있습니다.")
 			).queue();	
 	}
 }
