@@ -17,7 +17,6 @@ import net.dv8tion.jda.api.events.emoji.EmojiRemovedEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 
 public class Event extends ListenerAdapter {
 	private Guild guild;
@@ -32,44 +31,37 @@ public class Event extends ListenerAdapter {
 	private String emoji_c = "1204311113685008394";
 	
 	public Event(JDA jda) {
-		/* target Guild ID HERE */
-		guild = jda.getGuildById(guild_c);
-		/* target Log TextChannel ID HERE */
-		log = guild.getTextChannelById(log_c);
-		/* target Emoji TextChannel ID HERE */
-		emoji = guild.getTextChannelById(emoji_c);
-		/* All emoticons are deleted every Saturday at 1:50. */
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			guild.getEmojis().forEach((emo) -> {
 				emo.delete().queueAfter(timer++, TimeUnit.SECONDS);
 			});
 			timer = 1;
 		}, WeekTime(DayOfWeek.SATURDAY), 7L * 24L * 60L * 60L * 1000L, TimeUnit.MILLISECONDS);
-	}	
 		
-	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-		event.deferReply(true);
-		/* If the guild, log, or emoji channels have not been added, they will be added this time. */
-		if(guild == null) {
+		Executors.newScheduledThreadPool(1).schedule(() -> {
 			/* target Guild ID HERE */
-			guild = event.getGuild();
+			guild = jda.getGuildById(guild_c);
 			/* target Log TextChannel ID HERE */
 			log = guild.getTextChannelById(log_c);
 			/* target Emoji TextChannel ID HERE */
 			emoji = guild.getTextChannelById(emoji_c);
-		}
+		}, 1, TimeUnit.MINUTES);
+		
+	}	
+		
+	@Override
+	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+		event.deferReply(true).queue();
 		
 		if(event.getFullCommandName().equals("emoji")) {
-			OptionMapping option = event.getOptions().get(0);
-			if(option.getAsString().equals("delete")) {
+			if(event.getOption("delete") != null) {
 				guild.getEmojis().forEach((emoji) -> {
-					emoji.delete().queueAfter(timer++, TimeUnit.SECONDS);
+					emoji.delete().delay(timer++, TimeUnit.SECONDS).queue();
 				});
 				event.getHook().sendMessage("모든 이모티콘을 성공적으로 제거하였습니다 ^+^").setEphemeral(true).queueAfter(timer, TimeUnit.SECONDS);
 				timer = 1;
 			}
-			else if(option.getAsString().equals("add")) {
+			else if(event.getOption("add") != null) {
 				event.getHook().sendMessage("기존 채널이 아니라 이번 신규 채널에 봇이 보낸 해시값과 문자열로 이모티콘을 제작합니다.").setEphemeral(true).queue();
 			}
 			else {
@@ -77,22 +69,21 @@ public class Event extends ListenerAdapter {
 			}
 		}
 		else {
-			while(!event.getChannel().getHistory().getRetrievedHistory().isEmpty()) {
-				event.getChannel().getHistory().retrievePast(event.getChannel().getHistory().size() % 50).queue(message -> {
-					message.forEach(target -> {
-						if(target.isEphemeral() || target.getType().equals(MessageType.UNKNOWN)) return;
-						event.getChannel().deleteMessageById(target.getId()).delay(timer++, TimeUnit.SECONDS);
-					});
+			event.getChannel().getHistory().retrievePast(50).queue(targetList -> {
+				targetList.forEach(target -> {
+					System.err.println(timer);
+					if(!target.isEphemeral() && !target.getType().equals(MessageType.UNKNOWN) && !target.isWebhookMessage())
+						event.getChannel().deleteMessageById(target.getId()).delay(timer++, TimeUnit.SECONDS).queue();
 				});
-			}
-			event.getHook().sendMessage("이 채널의 모든 메세지를 제거하였습니다.").setEphemeral(true).queueAfter(timer, TimeUnit.SECONDS);
+			});
+			event.getHook().sendMessage("이 채널의 최근 메세지 약 50개의 메세지를 제거하였습니다.").setEphemeral(true).queueAfter(timer, TimeUnit.SECONDS);
 			timer = 1;
 		}
 	}
 	
 	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
-		if(event.isFromGuild() && event.getChannel().equals(emoji)) {
+		if(event.isFromGuild() && event.getChannel().equals(emoji) && event.getAuthor().isBot()) {
 			String[] input = event.getMessage().getContentRaw().split(" ");
 			String name = input[0];
 			String link = input[1];
